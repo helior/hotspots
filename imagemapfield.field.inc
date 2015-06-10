@@ -43,3 +43,44 @@ function imagemapfield_field_is_empty($item, $field) {
   }
   return FALSE;
 }
+
+/**
+ * Implements hook_field_widget_info().
+ */
+function imagemapfield_field_widget_info() {
+  return array(
+    'imagemapfield_default' => array(
+      'label' => t('Default'),
+      'field types' => array('imagemap'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function imagemapfield_field_widget_form(&$form, $form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  $element = array();
+  $element['value'] = array(
+    '#type' => 'textarea',
+    '#label' => t('Area code'),
+    '#default_value' => isset($items[$delta]['value']) ? $items[$delta]['value'] : NULL,
+    '#attributes' => array(
+      'style' => 'font-family:monospace;white-space:pre;',
+    ),
+  );
+
+  $element['attach_to'] = array(
+    '#type' => 'select',
+    '#label' => t('Attach To'),
+    '#options' => drupal_map_assoc(array('one', 'two', 'three')),
+    '#default_value' => isset($items[$delta]['attach_to']) ? $items[$delta]['attach_to'] : NULL,
+  );
+
+  return $element;
+}
+
+/**
+ * Implements hook_field_widget_error().
+ */
+function imagemapfield_field_widget_error($element, $error, $form, &$form_state) {}
