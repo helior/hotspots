@@ -1,0 +1,10 @@
+<?php
+
+/**
+ * @file
+ * Image maps are clumsy on Drupal when you don't want to re-implement image
+ * fields. So this is a best effort at not disrupting Core's existing image
+ * field (The Drupal 8 plugin system would have changed everything here.)
+ */
+
+include_once 'imagemapfield.field.inc';
