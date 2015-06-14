@@ -26,22 +26,52 @@ function imagemapfield_field_instance_settings_form($field, $instance) {
 }
 
 /**
+ * Implements hook_field_is_empty().
+ */
+function imagemapfield_field_is_empty($item, $field) {
+  if (!isset($item['coordinates']) || $item['coordinates'] === '') {
+    return !isset($item['associate_image_field']) || $item['associate_image_field'] === '';
+  }
+  return FALSE;
+}
+
+/**
  * Implements hook_field_validate().
  */
 function imagemapfield_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
   foreach ($items as $delta => $item) {
-    // TODO: ensure that we have valid HTML and parse out any element that is not an <area>
+    // TODO: validate href
   }
 }
 
 /**
- * Implements hook_field_is_empty().
+ * Implements hook_field_insert().
  */
-function imagemapfield_field_is_empty($item, $field) {
-  if (!isset($item['value']) || $item['value'] === '') {
-    return !isset($item['attach_to']) || $item['attach_to'] === '';
+function imagemapfield_field_insert($entity_type, $entity, $field, $instance, $langcode, &$items) {
+  foreach ($items as $delta => $value) {
+    $items[$delta]['attributes'] = serialize($value['attributes']);
   }
-  return FALSE;
+}
+
+/**
+ * Implements hook_field_update().
+ */
+function imagemapfield_field_update($entity_type, $entity, $field, $instance, $langcode, &$items) {
+  foreach ($items as $delta => $value) {
+    $items[$delta]['attributes'] = serialize($value['attributes']);
+  }
+}
+
+/**
+ * Implements hook_field_load().
+ */
+function imagemapfield_field_load($entity_type, $entities, $field, $instances, $langcode, &$items, $age) {
+  foreach ($entities as $id => $entity) {
+    foreach ($items[$id] as $delta => $item) {
+
+      $items[$id][$delta]['attributes'] = unserialize($item['attributes']);
+    }
+  }
 }
 
 /**
@@ -52,6 +82,7 @@ function imagemapfield_field_widget_info() {
     'imagemapfield_default' => array(
       'label' => t('Default'),
       'field types' => array('imagemap'),
+      'multiple values' => FIELD_BEHAVIOR_DEFAULT,
     ),
   );
 }
@@ -60,21 +91,80 @@ function imagemapfield_field_widget_info() {
  * Implements hook_field_widget_form().
  */
 function imagemapfield_field_widget_form(&$form, $form_state, $field, $instance, $langcode, $items, $delta, $element) {
-  $element = array();
-  $element['value'] = array(
-    '#type' => 'textarea',
-    '#label' => t('Area code'),
-    '#default_value' => isset($items[$delta]['value']) ? $items[$delta]['value'] : NULL,
-    '#attributes' => array(
-      'style' => 'font-family:monospace;white-space:pre;',
-    ),
+  $element += array('#type' => 'fieldset');
+
+  $associate_image_field_options = array();
+  foreach (array_intersect_key(field_info_instances($element['#entity_type'], $element['#bundle']), imagemapfield_image_field_map()) as $image_instance) {
+    $associate_image_field_options[$image_instance['field_name']] = $image_instance['label'];
+  }
+
+  $element['associate_image_field'] = array(
+    '#type' => 'select',
+    '#title' => t('Associated image field'),
+    '#options' => $associate_image_field_options,
+    '#default_value' => isset($items[$delta]['associate_image_field']) ? $items[$delta]['associate_image_field'] : NULL,
   );
 
-  $element['attach_to'] = array(
+  $element['associate_image_delta'] = array(
     '#type' => 'select',
-    '#label' => t('Attach To'),
-    '#options' => drupal_map_assoc(array('one', 'two', 'three')),
-    '#default_value' => isset($items[$delta]['attach_to']) ? $items[$delta]['attach_to'] : NULL,
+    '#title' => t('Associated image field delta'),
+    '#options' => drupal_map_assoc(range(0, 20)),
+    '#default_value' => isset($items[$delta]['associate_image_delta']) ? $items[$delta]['associate_image_delta'] : NULL,
+  );
+
+  $element['coordinates'] = array(
+    '#type' => 'textarea',
+    '#resizable' => FALSE,
+    '#rows' => 2,
+    '#title' => t('Coordinates'),
+    '#default_value' => isset($items[$delta]['coordinates']) ? $items[$delta]['coordinates'] : NULL,
+  );
+
+  $element['shape'] = array(
+    '#type' => 'select',
+    '#title' => t('Shape'),
+    '#options' => array('default' => t('Default'), 'circle' => t('Circle'), 'poly' => t('Polygon'), 'rect' => t('Rectangle')),
+    '#default_value' => isset($items[$delta]['shape']) ? $items[$delta]['shape'] : NULL,
+  );
+
+  $element['href'] = array(
+    '#type' => 'textfield',
+    '#maxlength' => 2048,
+    '#title' => t('Href'),
+    '#default_value' => isset($items[$delta]['href']) ? $items[$delta]['href'] : NULL,
+  );
+
+  $element['attributes'] = array(
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#title' => t('Attributes'),
+    // '#tree' => TRUE,
+  );
+
+  $element['attributes']['class'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Class',
+    '#default_value' => isset($items[$delta]['attributes']['class']) ? $items[$delta]['attributes']['class'] : NULL,
+  );
+
+  $element['attributes']['rel'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Rel',
+    '#default_value' => isset($items[$delta]['attributes']['rel']) ? $items[$delta]['attributes']['rel'] : NULL,
+  );
+
+  $element['attributes']['alt'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Alt',
+    '#default_value' => isset($items[$delta]['attributes']['alt']) ? $items[$delta]['attributes']['alt'] : NULL,
+  );
+
+  $element['attributes']['target'] = array(
+    '#type' => 'select',
+    '#title' => 'target',
+    '#options' => drupal_map_assoc(array('_self', '_blank', '_parent', '_top')),
+    '#default_value' => isset($items[$delta]['attributes']['target']) ? $items[$delta]['attributes']['target'] : NULL,
   );
 
   return $element;
@@ -105,59 +195,24 @@ function imagemapfield_field_formatter_view($entity_type, $entity, $field, $inst
   $element = array();
 
   foreach ($items as $delta => $item) {
-    $element[$delta] = array('#markup' => $item['value']);
+    $id = drupal_html_id('imagemapfield');
+    $element[$delta] = array(
+      '#id' => $id,
+      '#attributes' => array('name' => $id),
+      '#type' => 'html_tag',
+      '#tag' => 'map',
+      '#value' => $item['value'],
+    );
   }
 
   return $element;
 }
 
- /**
-  * Implementation of hook_field_formatter_prepare_view().
-  */
- function imagemapfield_field_formatter_prepare_view($entity_type, $entities, $field, $instances, $langcode, &$items, $displays) {
-   if ($field['type'] != 'imagemap') {
-     return;
-   }
- }
-
 /**
- * Implements hook_field_attach_view_alter().
- */
-function imagemapfield_field_attach_view_alter(&$output, $context) {
-  $x = 'x';
-  $fields = array_filter(field_info_field_map(), '_imagemapfield_array_filter_fields');
-
-  foreach ($fields as $field_name => $field_map) {
-    // Drop out of loop if current entity does not match the entities the field is attached to.
-    if (!in_array(array_keys($context['entity_type'], $field_map['bundles']))) {
-      continue;
-    }
-
-    // Drop out if the field is not attached to this bundle.
-    if (!isset($context['entity']->{$field_name})) {
-      continue;
-    }
-
-    $lang = $context['entity']->language;
-
-    foreach ($context['entity']->{$field_name}[$lang] as $delta => $field_value) {
-      // Drop out if the image we're attaching to doesn't exist. Any other delta
-      // here is just as lost.
-      if (!isset($output[$field_value['attach_to']])) {
-        break;
-      }
-
-      $identifier = $output[$field_name][$delta]['#id'];
-    }
+ * Implementation of hook_field_formatter_prepare_view().
+*/
+function imagemapfield_field_formatter_prepare_view($entity_type, $entities, $field, $instances, $langcode, &$items, $displays) {
+  if ($field['type'] != 'imagemap') {
+    return;
   }
-  // Get field names of imagemap type;
-  // Get field instance config of those fields.
-  // iterate over instance config, match context with entity type & field on entity
-  // iterate over deltas of imagemap field
-  // search for "attach_to" field on entity.
-  // If exists, get ID attribute of current imagemap, attach to the matching delta of image attributes on $output array.
-}
-
-function _imagemapfield_array_filter_fields($field) {
-  return $field['type'] == 'imagemap';
 }
