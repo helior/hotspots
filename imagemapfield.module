@@ -7,4 +7,116 @@
  * field (The Drupal 8 plugin system would have changed everything here.)
  */
 
+/**
+ * TODOS:
+ * - Each image field reference must render it's own map element
+ * - Style fields with 2-column layout
+ * --- Discover all image fields attached to current bundle
+ * --- Invoke hook to declare custom image-like fields to attach to
+ * - Use Link module to validate URL
+ * - Validate that required number of coordinates match HTML spec (https://www.w3.org/wiki/HTML/Elements/area)
+ * - Support Responsive Image library (make it configurable to disable)
+ * - Put field descriptions in each form element that merits explanation.
+ * - Hook API file.
+ * - Rename module to: "Hot Spot", "Image Map",
+ * - Hide field form and display a warning when there are no image fields to associate with.
+ * - Trim & Validate coordinates to be numeric, and comma-separated
+ */
+
 include_once 'imagemapfield.field.inc';
+
+/**
+ * Implements hook_field_attach_view_alter().
+ */
+function imagemapfield_field_attach_view_alter(&$output, $context) {
+  $fields = imagemapfield_imagemap_field_map();
+
+  // TODO: Get relevant imagemap fields using array_intersect()...
+
+  foreach ($fields as $field_name => $field_map) {
+    // Drop out of loop if current entity does not match the entities the field is attached to.
+    if (!in_array($context['entity_type'], array_keys($field_map['bundles']))) {
+      continue;
+    }
+
+    // Drop out if the field is not attached to this bundle.
+    if (!isset($context['entity']->{$field_name})) {
+      continue;
+    }
+
+    $lang = $context['entity']->language;
+
+    foreach ($context['entity']->{$field_name}[$lang] as $delta => $field_value) {
+      // Drop out if the image we're attaching to doesn't exist. Any other delta
+      // here is just as lost.
+      if (!isset($output[$field_value['associate_image_field']])) {
+        break;
+      }
+
+      $identifier = $output[$field_name][$delta]['#id'];
+      if (isset($output[$field_value['associate_image_field']][$field_value['associate_image_delta']])) {
+        $output[$field_value['associate_image_field']][$field_value['associate_image_delta']]['#item']['attributes']['usemap'] = $identifier;
+      }
+    }
+  }
+  // Get field names of imagemap type;
+  // Get field instance config of those fields.
+  // iterate over instance config, match context with entity type & field on entity.
+  // iterate over deltas of imagemap field
+  // search for "attach_to" field on entity.
+  // If exists, get ID attribute of current imagemap, attach to the matching delta of image attributes on $output array.
+}
+
+/**
+ * Implements hook_imagemapfield_image_types().
+ */
+function imagemapfield_imagemapfield_image_types() {
+  return array('image');
+}
+
+function imagemapfield_imagemap_field_map() {
+  return array_filter(field_info_field_map(), '_imagemapfield_array_filter_imagemap_fields');
+}
+
+function imagemapfield_image_field_map() {
+  return array_filter(field_info_field_map(), '_imagemapfield_array_filter_image_fields');
+}
+
+function _imagemapfield_array_filter_imagemap_fields($field) {
+  return $field['type'] == 'imagemap';
+}
+
+function _imagemapfield_array_filter_image_fields($field) {
+  $image_types = imagemapfield_get_image_types();
+  return in_array($field['type'], $image_types);
+}
+
+/**
+ * Collects all identified image field types().
+ *
+ * @see hook_imagemapfield_image_types().
+ *
+ * @return array
+ *   A list of image field types.
+ */
+function imagemapfield_get_image_types() {
+  $image_types = &drupal_static(__FUNCTION__);
+
+  if (!isset($image_types)) {
+    if ($cache = cache_get('imagemapfield_image_types', 'cache')) {
+      $image_types = $cache->data;
+    }
+    else {
+      $image_types = array();
+      foreach (module_implements('imagemapfield_image_types') as $module) {
+        $module_types = module_invoke($module, 'imagemapfield_image_types');
+        $image_types = array_merge($image_types, $module_types);
+      }
+
+      array_unique($image_types);
+      cache_set('imagemapfield_image_types', $image_types);
+    }
+  }
+
+  return $image_types;
+}
