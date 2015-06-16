@@ -195,6 +195,9 @@ function imagemapfield_field_formatter_view($entity_type, $entity, $field, $inst
   $element = array();
 
   foreach ($items as $delta => $item) {
+    // Group by image_field + delta
+    // foreach group, render a map element
+    // foreach area in group, render area
     $id = drupal_html_id('imagemapfield');
     $element[$delta] = array(
       '#id' => $id,

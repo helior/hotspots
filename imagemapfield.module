@@ -10,6 +10,8 @@
 /**
  * TODOS:
  * - Each image field reference must render it's own map element
+ *   - map name = image source + delta + ID
+ *   - area attributes
  * - Style fields with 2-column layout
  * --- Discover all image fields attached to current bundle
  * --- Invoke hook to declare custom image-like fields to attach to
