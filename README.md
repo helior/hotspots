@@ -1,2 +1,4 @@
-## Image Map Field
-Emphasis on the "map" portion; this injects the `<map>` element onto the page and binds a relationship with an existing image on the page.
+## Hotspots
+
+Do you remember image maps? They're back!!
+This module will allow you to create image map coordinates to associate with any entity's image fields.

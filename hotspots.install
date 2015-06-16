@@ -2,13 +2,13 @@
 
 /**
  * @file
- * Install the things.
+ * Field schema and whatnot.
  */
 
 /**
  * Implements hook_field_schema().
  */
-function imagemapfield_field_schema($field) {
+function hotspots_field_schema($field) {
   return array(
     'columns' => array(
       'associate_image_field' => array(

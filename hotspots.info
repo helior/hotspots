@@ -1,0 +1,3 @@
+name = Hotspots
+description = Associate image map hotspots to existing image fields.
+core = 7.x
