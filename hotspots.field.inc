@@ -34,7 +34,7 @@ function hotspots_field_instance_settings_form($field, $instance) {
  * Implements hook_field_is_empty().
  */
 function hotspots_field_is_empty($item, $field) {
-  return !isset($item['coordinates']) || $item['coordinates'] === '';
+  return !isset($item['coords']) || $item['coords'] === '';
 }
 
 /**
@@ -43,6 +43,7 @@ function hotspots_field_is_empty($item, $field) {
 function hotspots_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
   foreach ($items as $delta => $item) {
     // TODO: validate href
+    // TODO: validate coords
   }
 }
 
@@ -114,12 +115,12 @@ function hotspots_field_widget_form(&$form, $form_state, $field, $instance, $lan
     '#default_value' => isset($items[$delta]['associate_image_delta']) ? $items[$delta]['associate_image_delta'] : NULL,
   );
 
-  $element['coordinates'] = array(
+  $element['coords'] = array(
     '#type' => 'textarea',
     '#resizable' => FALSE,
     '#rows' => 2,
     '#title' => t('Coordinates'),
-    '#default_value' => isset($items[$delta]['coordinates']) ? $items[$delta]['coordinates'] : NULL,
+    '#default_value' => isset($items[$delta]['coords']) ? $items[$delta]['coords'] : NULL,
   );
 
   $element['shape'] = array(
@@ -218,7 +219,7 @@ function hotspots_field_formatter_view($entity_type, $entity, $field, $instance,
       );
 
       foreach ($areas as $area) {
-        $area['attributes']['coords'] = $area['coordinates'];
+        $area['attributes']['coords'] = $area['coords'];
         $area['attributes']['shape'] = $area['shape'];
         $area['attributes']['href'] = $area['href'];
 

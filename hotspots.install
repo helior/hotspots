@@ -21,7 +21,7 @@ function hotspots_field_schema($field) {
         'length' => 10,
         'not null' => FALSE,
       ),
-      'coordinates' => array(
+      'coords' => array(
         'type' => 'text',
         'size' => 'medium',
         'not null' => FALSE,
