@@ -19,8 +19,13 @@ function hotspots_field_info() {
  * Implements hook_field_instance_settings_form().
  */
 function hotspots_field_instance_settings_form($field, $instance) {
-  // TODO: Support responsive image check box.
-  $form = array();
+  $settings = $instance['settings'];
+
+  $form['responsive'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Support responsive images'),
+    '#default_value' => $settings['responsive'] ? $settings['responsive'] : NULL,
+  );
 
   return $form;
 }
@@ -29,10 +34,7 @@ function hotspots_field_instance_settings_form($field, $instance) {
  * Implements hook_field_is_empty().
  */
 function hotspots_field_is_empty($item, $field) {
-  if (!isset($item['coordinates']) || $item['coordinates'] === '') {
-    return !isset($item['associate_image_field']) || $item['associate_image_field'] === '';
-  }
-  return FALSE;
+  return !isset($item['coordinates']) || $item['coordinates'] === '';
 }
 
 /**
@@ -192,19 +194,39 @@ function hotspots_field_formatter_info() {
  */
 function hotspots_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $element = array();
+  $maps = array();
 
+  // Group all hotspot values into the image fields they reference.
   foreach ($items as $delta => $item) {
-    // Group by image_field + delta
-    // foreach group, render a map element
-    // foreach area in group, render area
-    $id = drupal_html_id('hotspot');
-    $element[$delta] = array(
-      '#id' => $id,
-      '#attributes' => array('name' => $id),
-      '#type' => 'html_tag',
-      '#tag' => 'map',
-      '#value' => $item['value'],
-    );
+    $maps[$item['associate_image_field']][$item['associate_image_delta']][] = $item;
+  }
+
+  // Iterate over each image field to produce one map element per image.
+  foreach ($maps as $field_name => $map) {
+    foreach ($map as $delta => $areas) {
+      // Create a map from the $field-delta
+      $id = drupal_html_id('hotspot-' . $field_name . '-' . $delta);
+      $map_element = array(
+        '#hotspots_field_name' => $field_name,
+        '#hotspots_field_delta' => $delta,
+        '#hotspots_id' => $id,
+
+        '#attributes' => array('name' => $id, 'id' => $id),
+        '#type' => 'html_tag',
+        '#tag' => 'map',
+        '#value' => '',
+      );
+
+      foreach ($areas as $area) {
+        $area['attributes']['coords'] = $area['coordinates'];
+        $area['attributes']['shape'] = $area['shape'];
+        $area['attributes']['href'] = $area['href'];
+
+        $map_element['#value'] .= '<area ' . drupal_attributes(array_filter($area['attributes'])) . ' />';
+      }
+
+      $element[] = $map_element;
+    }
   }
 
   return $element;
