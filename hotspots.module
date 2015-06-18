@@ -1,46 +1,41 @@
 <?php
 
 /**
- * @file
+ * @file hotspots.module
  */
-
-/**
- * TODOS:
- * - Support Responsive Image library (make it configurable to disable)
- * - Use Link module to validate URL
- * - Validate that required number of coordinates match HTML spec (https://www.w3.org/wiki/HTML/Elements/area)
- * - Put field descriptions in each form element that merits explanation.
- * - Hide field form and display a warning when there are no image fields to associate with.
- * - Trim & Validate coordinates to be numeric, and comma-separated
- * - Hook API file.
- * - Style fields with 2-column layout
- */
-
 include_once 'hotspots.field.inc';
 
 /**
- * Implements hook_field_attach_view_alter().
+ * Implements hook_entity_view().
  */
-function hotspots_field_attach_view_alter(&$output, $context) {
+function hotspots_entity_view($entity, $type, $view_mode, $langcode) {
+  // $entity->field_my_image[LANGUAGE_NONE][0]['attributes'] = array('usemap' => '#make-it-work-please');
   $fields = hotspots_hotspot_field_map();
 
   foreach ($fields as $field_name => $field_map) {
     // Drop out of loop if current entity does not match the entities the field
     // is attached to or if the field is not attached to this bundle.
-    if (!isset($field_map['bundles'][$context['entity_type']]) || !isset($context['entity']->{$field_name})) {
+    if (!isset($field_map['bundles'][$type]) || !isset($entity->{$field_name})) {
       continue;
     }
 
-    if (isset($output[$field_name])) {
-      foreach (element_children($output[$field_name]) as $delta) {
-        $map = $output[$field_name][$delta];
-        if (isset($output[$map['#hotspots_field_name']][$map['#hotspots_field_delta']])) {
-          $output[$map['#hotspots_field_name']][$map['#hotspots_field_delta']]['#item']['attributes']['usemap'] = '#' . $map['#hotspots_id'];
+    if (isset($entity->{$field_name})) {
+      foreach ($entity->{$field_name}[LANGUAGE_NONE] as $delta => $field) {
+        if (isset($field['associate_image_field']) && isset($field['associate_image_delta'])) {
+          $id = hotspots_id($field['associate_image_field'], $field['associate_image_delta']);
+          $entity->{$field['associate_image_field']}[LANGUAGE_NONE][$field['associate_image_delta']]['attributes']['usemap'] = '#' . $id;
         }
       }
     }
   }
 }
+
+/**
+ * Helper to create string identifiers.
+ */
+ function hotspots_id($fieldname, $delta) {
+   return 'hotspot-' . $fieldname . '-' . $delta;
+ }
 
 /**
  * Implements hook_hotspots_image_types().
