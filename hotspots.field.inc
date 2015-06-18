@@ -1,6 +1,10 @@
 <?php
 
 /**
+ * @file hotspots.field.inc
+ */
+
+/**
  * Implementation of hook_field_info().
  */
 function hotspots_field_info() {
@@ -206,7 +210,7 @@ function hotspots_field_formatter_view($entity_type, $entity, $field, $instance,
   foreach ($maps as $field_name => $map) {
     foreach ($map as $delta => $areas) {
       // Create a map from the $field-delta
-      $id = drupal_html_id('hotspot-' . $field_name . '-' . $delta);
+      $id = hotspots_id($field_name, $delta);
       $map_element = array(
         '#hotspots_field_name' => $field_name,
         '#hotspots_field_delta' => $delta,
