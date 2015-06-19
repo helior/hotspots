@@ -44,12 +44,7 @@ function hotspots_field_is_empty($item, $field) {
 /**
  * Implements hook_field_validate().
  */
-function hotspots_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
-  foreach ($items as $delta => $item) {
-    // TODO: validate href
-    // TODO: validate coords
-  }
-}
+function hotspots_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {}
 
 /**
  * Implements hook_field_insert().
@@ -235,13 +230,4 @@ function hotspots_field_formatter_view($entity_type, $entity, $field, $instance,
   }
 
   return $element;
-}
-
-/**
- * Implementation of hook_field_formatter_prepare_view().
-*/
-function hotspots_field_formatter_prepare_view($entity_type, $entities, $field, $instances, $langcode, &$items, $displays) {
-  if ($field['type'] != 'hotspot') {
-    return;
-  }
 }

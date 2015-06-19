@@ -9,7 +9,6 @@ include_once 'hotspots.field.inc';
  * Implements hook_entity_view().
  */
 function hotspots_entity_view($entity, $type, $view_mode, $langcode) {
-  // $entity->field_my_image[LANGUAGE_NONE][0]['attributes'] = array('usemap' => '#make-it-work-please');
   $fields = hotspots_hotspot_field_map();
 
   foreach ($fields as $field_name => $field_map) {
