@@ -194,6 +194,9 @@ function hotspots_field_formatter_info() {
  * Implements hook_field_formatter_view().
  */
 function hotspots_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+//  drupal_add_js(drupal_get_path('module', 'hotspots') . '/imageMapResizer.js');
+//  drupal_add_js(drupal_get_path('module', 'hotspots') . '/hotspots.js');
+
   $element = array();
   $maps = array();
 

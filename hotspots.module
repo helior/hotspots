@@ -50,6 +50,71 @@ function hotspots_hotspots_image_types() {
 }
 
 /**
+ * Implements hook_library().
+ */
+// function hotspots_library() {
+//   $library_path = hotspots_get_library_path();
+
+//   $info['image-map-resizer'] = array(
+//     'title' => 'Image Map Resizer',
+//     'website' => CHOSEN_WEBSITE_URL,
+//     'version' => '1.1.0',
+//     'js' => array(
+//       $library_path . '/chosen.jquery.min.js' => array('group' => 'JS_LIBRARY'),
+//     ),
+//   );
+//   if (variable_get('chosen_use_theme', TRUE)) {
+//     $info['chosen']['css'] = array($library_path . '/chosen.css' => array());
+//   }
+
+//   // All the settings that are actually passed through into the chosen()
+//   // function are contained in this array.
+//   $options = array(
+//     'disable_search' => (bool) variable_get('chosen_disable_search', FALSE),
+//     'disable_search_threshold' => (int) variable_get('chosen_disable_search_threshold', 0),
+//     'search_contains' => (bool) variable_get('chosen_search_contains', FALSE),
+//     'placeholder_text_multiple' => variable_get('chosen_placeholder_text_multiple', t('Choose some options')),
+//     'placeholder_text_single' => variable_get('chosen_placeholder_text_single', t('Choose an option')),
+//     'no_results_text' => variable_get('chosen_no_results_text', t('No results match')),
+//     'inherit_select_classes' => TRUE,
+//   );
+
+//   $module_path = drupal_get_path('module', 'chosen');
+//   $info['drupal.chosen'] = array(
+//     'title' => 'Drupal Chosen integration',
+//     'website' => 'https://drupal.org/project/chosen',
+//     'version' => '1.1.0',
+//     'js' => array(
+//       $module_path . '/chosen.js' => array(
+//         'group' => JS_DEFAULT,
+//         'weight' => 100,
+//       ),
+//       array(
+//         'data' => array(
+//           'chosen' => array(
+//             'selector' => variable_get('chosen_jquery_selector', 'select:visible'),
+//             'minimum_single' => (int) variable_get('chosen_minimum_single', 20),
+//             'minimum_multiple' => (int) variable_get('chosen_minimum_multiple', 20),
+//             'minimum_width' => (int) variable_get('chosen_minimum_width', 200),
+//             'options' => $options,
+//           ),
+//         ),
+//         'type' => 'setting',
+//       ),
+//     ),
+//     'css' => array(
+//       $module_path . '/css/chosen-drupal.css' => array(),
+//     ),
+//     'dependencies' => array(
+//       array('system', 'jquery.once'),
+//       array('chosen', 'chosen'),
+//     ),
+//   );
+
+//   return $info;
+// }
+
+/**
  * Collects all identified image field types().
  *
  * @see hook_hotspots_image_types().
@@ -99,6 +164,40 @@ function hotspots_hotspot_field_map() {
  */
 function hotspots_image_field_map() {
   return array_filter(field_info_field_map(), '_hotspots_array_filter_image_fields');
+}
+
+/**
+ * Get the location of the image-map-resizer library.
+ *
+ * @return
+ *   The location of the library, or FALSE if the library isn't installed.
+ */
+function hotspots_get_library_path() {
+  if (function_exists('libraries_get_path')) {
+    return libraries_get_path('image-map-resizer');
+  }
+
+  // The following logic is taken from libraries_get_libraries()
+  $searchdir = array();
+
+  // Similar to 'modules' and 'themes' directories inside an installation
+  // profile, installation profiles may want to place libraries into a
+  // 'libraries' directory.
+  $searchdir[] = 'profiles/' . drupal_get_profile() . '/libraries';
+
+  // Always search sites/all/libraries.
+  $searchdir[] = 'sites/all/libraries';
+
+  // Also search sites/<domain>/*.
+  $searchdir[] = conf_path() . '/libraries';
+
+  foreach ($searchdir as $dir) {
+    if (file_exists($dir . '/image-map-resizer/js/imageMapResizer.min.js')) {
+      return $dir . '/image-map-resizer';
+    }
+  }
+
+  return FALSE;
 }
 
 /**
