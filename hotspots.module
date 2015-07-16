@@ -18,7 +18,7 @@ function hotspots_entity_view($entity, $type, $view_mode, $langcode) {
       continue;
     }
 
-    if (isset($entity->{$field_name})) {
+    if (!empty($entity->{$field_name})) {
       foreach ($entity->{$field_name}[LANGUAGE_NONE] as $delta => $field) {
         if (isset($field['associate_image_field']) && isset($field['associate_image_delta'])) {
           $id = hotspots_id($field['associate_image_field'], $field['associate_image_delta']);
